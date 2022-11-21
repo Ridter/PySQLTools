@@ -278,7 +278,7 @@ EXEC sp_OADestroy @ObjectToken;'''.format(hex_data.decode(), path)
         command = pre_command.rstrip("+") + " \"{}\"".format(remote)
         status = self.sp_shell(command, result=False)
         if status:
-            logging.info("Copy /b {0}_x.config_txt {0}".format(remote))
+            logging.info("Copy /b {0}_x.config_json {0}".format(remote))
         else:
             logging.error("Execute command error")
             self.file_remove(remote=remote)
