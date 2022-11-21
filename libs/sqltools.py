@@ -199,6 +199,7 @@ class sql_op:
                 exec sp_oamethod @shell,'exec',@exec output,'c:\windows\system32\cmd.exe /c {0}';
                 exec sp_oamethod @exec, 'StdOut', @text out;
                 exec sp_oamethod @text, 'ReadAll', @str out;
+                exec sp_oadestroy @shell;
                 select @str""".format(command)
             row = self.sql_query(sql)
             resp = row[0]['']
