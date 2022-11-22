@@ -161,7 +161,7 @@ if __name__ == '__main__':
             self.sql_op.clr_exec("clr_netstat")
 
         def do_clr_rdp(self, line):
-            self.sql_op.clr_exec("clr_rpd")            
+            self.sql_op.clr_exec("clr_rdp")            
         
         def do_clr_getav(self, line):
             self.sql_op.clr_exec("clr_getav")     
