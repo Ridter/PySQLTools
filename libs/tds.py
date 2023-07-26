@@ -1024,7 +1024,6 @@ class MSSQL:
                     error =  "ERROR(%s): Line %d: %s" % (key['ServerName'].decode('utf-16le'), key['LineNumber'], key['MsgText'].decode('utf-16le'))                                      
                     self.lastError = SQLErrorException("ERROR: Line %d: %s" % (key['LineNumber'], key['MsgText'].decode('utf-16le')))
                     LOG.error(error)
-                    return False
 
                 elif key['TokenType'] == TDS_INFO_TOKEN:
                     LOG.info("INFO(%s): Line %d: %s" % (key['ServerName'].decode('utf-16le'), key['LineNumber'], key['MsgText'].decode('utf-16le')))
@@ -1050,7 +1049,6 @@ class MSSQL:
                         else:
                             _type = "%d" % key['Type']                 
                         LOG.info("ENVCHANGE(%s): Old Value: %s, New Value: %s" % (_type,record['OldValue'].decode('utf-16le'), record['NewValue'].decode('utf-16le')))
-        return True
        
     def parseRow(self,token,tuplemode=False):
         # TODO: This REALLY needs to be improved. Right now we don't support correctly all the data types
