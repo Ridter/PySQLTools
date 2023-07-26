@@ -1,6 +1,6 @@
 # Impacket - Collection of Python classes for working with network protocols.
 #
-# SECUREAUTH LABS. Copyright (C) 2022 SecureAuth Corporation. All rights reserved.
+# Copyright (C) 2022 Fortra. All rights reserved.
 #
 # This software is provided under a slightly modified version
 # of the Apache Software License. See the accompanying LICENSE file
@@ -48,6 +48,8 @@ class DummyPrint:
     def logMessage(self,message):
         if message == '\n':
             print(message)
+        elif message == '\r':
+            print()
         else:
             print(message, end=' ')
 
@@ -588,7 +590,7 @@ class MSSQL:
     def socketRecv(self, packetSize):
         data = self.socket.recv(packetSize)
         if self.tlsSocket is not None:
-            dd = ''
+            dd = b''
             self.tlsSocket.bio_write(data)
             while True:
                 try:
@@ -663,8 +665,9 @@ class MSSQL:
             LOG.info("Encryption required, switching to TLS")
 
             # Switching to TLS now
-            ctx = SSL.Context(SSL.TLSv1_METHOD)
-            ctx.set_cipher_list('RC4, AES256')
+            ctx = SSL.Context(SSL.TLS_METHOD)
+            ctx.set_cipher_list('ALL:@SECLEVEL=0'.encode('utf-8'))
+            ctx.set_options('UnsafeLegacyRenegotiation')
             tls = SSL.Connection(ctx,None)
             tls.set_connect_state()
             while True:
@@ -872,8 +875,8 @@ class MSSQL:
             LOG.info("Encryption required, switching to TLS")
 
             # Switching to TLS now
-            ctx = SSL.Context(SSL.TLSv1_METHOD)
-            ctx.set_cipher_list('RC4, AES256')
+            ctx = SSL.Context(SSL.TLS_METHOD)
+            ctx.set_cipher_list('ALL:@SECLEVEL=0'.encode('utf-8'))
             tls = SSL.Connection(ctx,None)
             tls.set_connect_state()
             while True:
@@ -979,6 +982,13 @@ class MSSQL:
                 col['Length'] = 10
                 fmt = '%%%ds'
 
+            col['minLenght'] = 0
+            for row in self.rows:
+                if len(str(row[col['Name']])) > col['minLenght']:
+                   col['minLenght'] = len(str(row[col['Name']]))
+            if col['minLenght'] < col['Length']:
+                col['Length'] = col['minLenght']
+
             if len(col['Name']) > col['Length']:
                 col['Length'] = len(col['Name'])
             elif col['Length'] > self.MAX_COL_LEN:
@@ -992,29 +1002,20 @@ class MSSQL:
             return
         for col in self.colMeta:
             self.__rowsPrinter.logMessage(col['Format'] % col['Name'] + self.COL_SEPARATOR)
-        self.__rowsPrinter.logMessage('\n')
+        self.__rowsPrinter.logMessage('\r')
         for col in self.colMeta:
             self.__rowsPrinter.logMessage('-'*col['Length'] + self.COL_SEPARATOR)
-        self.__rowsPrinter.logMessage('\n')
-
+        self.__rowsPrinter.logMessage('\r')
 
     def printRows(self):
         if self.lastError is True:
             return
         self.processColMeta()
         self.printColumnsHeader()
-        if len(self.rows) == 0:
-            LOG.info("No data return")
         for row in self.rows:
             for col in self.colMeta:
-                if len(row) == 1:
-                    print(row['output'])
-                else:
-                    self.__rowsPrinter.logMessage(col['Format'] % row[col['Name']] + self.COL_SEPARATOR)
-            if len(row) != 1:
-                self.__rowsPrinter.logMessage('\n')
-
-    # def execute_
+                self.__rowsPrinter.logMessage(col['Format'] % row[col['Name']] + self.COL_SEPARATOR)
+            self.__rowsPrinter.logMessage('\n')
 
     def printReplies(self):
         for keys in list(self.replies.keys()):
@@ -1331,9 +1332,7 @@ class MSSQL:
                 raise Exception("ParseRow: SQL Variant type not yet supported :(")
             else:
                 raise Exception("ParseROW: Unsupported data type: 0%x" % _type)
-                
-            if type(value) == str:
-                value = value.replace("NULL", "")
+
             if tuplemode:
                 row.append(value)
             else:
