@@ -1,3 +1,4 @@
 impacket>=0.10.0
 pyasn1>=0.4.8
 pyOpenSSL>=22.1.0
+donut-shellcode>=1.0.2

