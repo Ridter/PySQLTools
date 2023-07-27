@@ -85,7 +85,6 @@ if __name__ == '__main__':
     clr_scloader {code} {key}  - encrypt Shellcode by Encrypt.py (only supports x64 shellcode.bin)
     clr_scloader1 {file} {key} - encrypt Shellcode by Encrypt.py and Upload Payload.txt
     clr_scloader2 {remotefile} - upload Payload.bin to target before Shellcode Loader
-    clr_assembly {file} {args} - execute assembly by clr
     use_link {link}            - linked server to use (set use_link localhost to go back to local or use_link .. to get back one step)
     enum_db                    - enum databases
     enum_links                 - enum linked servers
@@ -132,13 +131,13 @@ if __name__ == '__main__':
             remote, local = input
             self.sql_op.file_doanload(remote, local)
 
-        def do_clr_assembly(self, line):
-            input = line.split(" ")
-            if len(input) < 1 or len(line) == 0 :
-                print("Example: clr_assembly /tmp/Rubeus.exe -h")
-                return
-            # TODO
-            # self.sql_op.execute_assembly(input)
+        # def do_clr_assembly(self, line):
+        #     input = line.split(" ")
+        #     if len(input) < 1 or len(line) == 0 :
+        #         print("Example: clr_assembly /tmp/Rubeus.exe -h")
+        #         return
+        #     # TODO
+        #     # self.sql_op.execute_assembly(input)
 
         def do_install_clr(self, line):
             self.sql_op.install_clr()
