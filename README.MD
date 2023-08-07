@@ -88,7 +88,8 @@ mask_query                    - mask query
 
 在其他平台上，需要使用docker的[donut](https://github.com/TheWover/donut)生成shellcode，在使用`clr_assembly_sc`进行加载执行。
 
-
+## CLR
+CLR源码见:[MSSQL_CLR](https://github.com/Ridter/MSSQL_CLR)
 ## 参考：
 
 ```
